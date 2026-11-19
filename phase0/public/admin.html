@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>TVScope · Phase 0 Admin</title>
+  <link rel="stylesheet" href="/style.css">
+  <script defer src="/admin.js"></script>
+</head>
+<body>
+  <main>
+    <p class="eyebrow">TVScope / PC-only dashboard</p>
+    <h1>Hardware reconnaissance results</h1>
+    <p>Only accessible locally from PC via <code>http://localhost:8080/admin</code>. Reports kept in server memory, lost on restart.</p>
+    <section>
+      <h2>Collected reports</h2>
+      <button id="refresh">Refresh</button>
+      <button id="export">Export JSON</button>
+      <button id="clear">Clear memory</button>
+      <p id="status" role="status">Ready.</p>
+      <pre id="results">No reports loaded.</pre>
+    </section>
+    <footer>Phase 0 only. Reports are raw browser observations, not Android system inventory.</footer>
+  </main>
+</body>
+</html>
