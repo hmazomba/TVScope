@@ -112,9 +112,20 @@ function createBridge(opts) {
     return item.hits <= count;
   }
   function cleanPairings() {
+    let changed = false;
     for (const [id, p] of pairings) {
-      if (Date.now() > p.expiry || p.state === "claimed") pairings.delete(id);
+      if (Date.now() <= p.expiry && p.state !== "claimed") continue;
+      if (p.state === "approved" && p.deviceId) {
+        const unclaimed = state.devices.find(d => d.id === p.deviceId && !d.revokedAt);
+        if (unclaimed) {
+          unclaimed.revokedAt = new Date().toISOString();
+          changed = true;
+          auditEvent("pairing.expired_unclaimed", { deviceId: unclaimed.id });
+        }
+      }
+      pairings.delete(id);
     }
+    if (changed) saveData(state);
   }
   function validToken(token) {
     if (typeof token !== "string" || token.length < 30 || token.length > 128) return null;
