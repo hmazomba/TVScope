@@ -191,6 +191,10 @@
   });
   el("collect").addEventListener("click", collect);
   el("preview").addEventListener("click", preview);
+  el("start-remote").addEventListener("click", function () {
+    el("remote-box").focus();
+    put("remote-last", "Capture active. Press D-pad, OK, Back, Home.");
+  });
   el("clear-keys").addEventListener("click", function () {
     remoteEvents = [];
     put("remote-last", "Remote events cleared.");
