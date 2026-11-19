@@ -93,6 +93,42 @@ function createPhase0Server() {
     if (req.method === "GET" && route === "/api/ping") {
       return reply(res, 200, { pong: true, serverTime: Date.now() });
     }
+    if (req.method === "GET" && route === "/sample.mp4") {
+      const file = path.join(__dirname, "media", "test.mp4");
+      let stat;
+      try { stat = fs.statSync(file); } catch { return reply(res, 404, { error: "sample_not_installed" }); }
+      if (!stat.isFile() || stat.size === 0) return reply(res, 404, { error: "invalid_sample" });
+      const length = stat.size;
+      let start = 0;
+      let end = length - 1;
+      let code = 200;
+      if (req.headers.range) {
+        const match = /^bytes=(\d+)-(\d*)$/.exec(req.headers.range);
+        if (!match) {
+          res.writeHead(416, { "Content-Range": "bytes */" + length });
+          return res.end();
+        }
+        start = Number(match[1]);
+        end = match[2] ? Number(match[2]) : end;
+        if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) ||
+            start > end || start >= length) {
+          res.writeHead(416, { "Content-Range": "bytes */" + length });
+          return res.end();
+        }
+        end = Math.min(end, length - 1);
+        code = 206;
+      }
+      const headers = {
+        "Content-Type": "video/mp4",
+        "Accept-Ranges": "bytes",
+        "Content-Length": end - start + 1,
+        "Cache-Control": "no-store",
+        "X-Content-Type-Options": "nosniff"
+      };
+      if (code === 206) headers["Content-Range"] = "bytes " + start + "-" + end + "/" + length;
+      res.writeHead(code, headers);
+      return fs.createReadStream(file, { start, end }).pipe(res);
+    }
     if (req.method === "GET" && route === "/api/reports") {
       if (!isLoopback(req)) return reply(res, 403, { error: "pc_only" });
       return reply(res, 200, { reports });
