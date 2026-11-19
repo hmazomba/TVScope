@@ -12,10 +12,10 @@ No native Android control, package installation, root or firmware operations.
 **Never bypass certificate warnings or disable TLS verification.** Phase 0 validated HTTP, not HTTPS. TV browser must trust Bridge certificate and match its SAN hostname/IP.
 
 Options:
-1. Domain you control, publicly trusted certificate obtained via DNS validation, local DNS mapping domain to PC LAN IP. Do not publicly expose service or forward port.
+1. Domain you control, publicly trusted certificate obtained via DNS validation. Map that domain to PC LAN IP on TV network; on the PC, map the SAME domain to 127.0.0.1 using a local hosts-file entry, so admin requests remain loopback. Open https://YOUR-DOMAIN:8443/admin from PC and https://YOUR-DOMAIN:8443/tv from TV. Add domain to TVSCOPE_HOSTS. Do not publicly expose service or forward port.
 2. Locally issued certificate (e.g. mkcert) only when TV has manufacturer-supported CA import and explicitly trusts it. Installing CA on Windows does NOT install it on TV.
 
-Certificate must cover PC admin host (localhost or trusted alternate) and TV LAN hostname/IP. If JVC cannot trust certificate, Phase 1 pairing on TV remains blocked. Continue Phase 0; do not downgrade security.
+Certificate must cover exact HTTPS hostname used by each client. Publicly trusted certificates usually cannot cover localhost/private LAN IP; use domain-to-loopback mapping on PC for single public-domain certificate. If using a local CA, certificate can explicitly cover localhost and PC LAN address, provided each client trusts that CA. If JVC cannot trust certificate, Phase 1 pairing on TV remains blocked. Continue Phase 0; do not downgrade security.
 
 ## PC setup (Windows PowerShell)
 
@@ -44,7 +44,7 @@ Optional environment:
 
 ## PC admin
 
-Open https://localhost:8443/admin with trusted certificate for localhost. Sign in with TVSCOPE_ADMIN_PASSWORD. Admin site and admin APIs only accessible from PC loopback connections. Session expires after four hours.
+Open https://localhost:8443/admin with trusted certificate for localhost, or use public-domain address mapped to 127.0.0.1 on PC. Sign in with TVSCOPE_ADMIN_PASSWORD. Admin site and admin APIs only accessible from PC loopback connections. Session expires after four hours.
 
 Select pending request, enter six-digit code visible on TV, and approve. Never approve unknown request. Send harmless test message; inspect devices, diagnostics, audit summary, revoke credentials when necessary.
 
