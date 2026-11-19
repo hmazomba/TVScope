@@ -486,7 +486,8 @@ if (require.main === module) {
     });
     bridge.server.listen(port, process.env.TVSCOPE_BIND || "0.0.0.0", () => {
       console.log("TVScope Bridge Phase 1 — HTTPS only");
-      console.log("PC admin: https://localhost:" + port + "/admin");
+      console.log("PC admin: https://localhost:" + port + "/admin (requires TLS trust for localhost)");
+      console.log("Alternative: trusted domain mapped to 127.0.0.1 on PC; add domain to TVSCOPE_HOSTS.");
       for (const ip of ipv4s()) {
         console.log("TV address (certificate must cover and be trusted by TV): https://" + ip + ":" + port + "/tv");
       }
