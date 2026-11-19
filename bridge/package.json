@@ -1,0 +1,13 @@
+{
+  "name": "tvscope-bridge",
+  "version": "0.2.0",
+  "private": true,
+  "description": "TVScope Phase 1 authenticated local TV browser bridge",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test test/*.test.js",
+    "check": "node --check server.js && node --check public/tv.js && node --check public/admin.js"
+  },
+  "dependencies": { "ws": "8.18.3" }
+}
