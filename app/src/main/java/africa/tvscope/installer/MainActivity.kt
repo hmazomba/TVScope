@@ -2,6 +2,15 @@ package africa.tvscope.installer
 
 import android.app.Activity
 import android.content.Intent
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.LinkAddress
+import java.net.Inet4Address
+import java.net.InetAddress
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.atomic.AtomicInteger
 import android.hardware.usb.UsbManager
 import android.os.Bundle
 import android.os.Handler
@@ -32,7 +41,8 @@ class MainActivity : Activity() {
         host = EditText(this).apply { hint = "TV IP address (same LAN)"; setSingleLine(true) }
         port = EditText(this).apply { hint = "Custom TCP port"; setText("5555"); inputType = 2 }
         val usb = Button(this).apply { text = "Inspect USB ADB interface"; setOnClickListener { inspectUsb() } }
-        val tcp = Button(this).apply { text = "Probe TV network ports"; setOnClickListener { probeNetwork() } }
+        val discover = Button(this).apply { text = "Discover LAN devices (no TV IP needed)"; setOnClickListener { discoverLan() } }
+        val tcp = Button(this).apply { text = "Probe known TV IP ports"; setOnClickListener { probeNetwork() } }
         val manual = Button(this).apply { text = "USB APK install fallback guide"; setOnClickListener { showGuide() } }
         val share = Button(this).apply { text = "Share diagnostics report"; setOnClickListener { shareReport() } }
         output = TextView(this).apply {
@@ -45,6 +55,7 @@ class MainActivity : Activity() {
         layout.addView(host)
         layout.addView(port)
         layout.addView(usb)
+        layout.addView(discover)
         layout.addView(tcp)
         layout.addView(manual)
         layout.addView(share)
@@ -65,7 +76,7 @@ class MainActivity : Activity() {
         val devices = manager.deviceList.values
         if (devices.isEmpty()) {
             show("No USB devices detected. Check phone OTG host support, cable, TV USB role. " +
-                "TV USB ports may be host-only; host-to-host cable cannot establish ADB.")
+                "TV USB ports may be host-only; host-to-host cable cannot establish ADB. Test phone OTG with USB flash drive first.")
             return
         }
         val lines = mutableListOf<String>()
@@ -85,6 +96,59 @@ class MainActivity : Activity() {
         lines.add("ADB interface candidates: $candidates")
         lines.add("Interface detection does not prove debugging enabled, authorization, or install capability.")
         show(lines.joinToString("\n"))
+    }
+
+    private fun discoverLan() {
+        val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = cm.activeNetwork
+        val properties = network?.let { cm.getLinkProperties(it) }
+        val ipv4 = properties?.linkAddresses?.firstOrNull {
+            it.address is Inet4Address && !it.address.isLoopbackAddress
+        }
+        if (ipv4 == null) {
+            show("No active IPv4 LAN address. Connect phone to same Wi-Fi as TV. Disable VPN/mobile data if routing differs.")
+            return
+        }
+        val address = ipv4.address.address
+        val prefix = ipv4.prefixLength
+        if (prefix !in 16..30) {
+            show("Unsupported subnet prefix /$prefix. Automatic scan limited to local /24. Use router DHCP client list.")
+            return
+        }
+        // Limit scanning to 254 hosts on phone's local /24; do not scan internet or unrelated subnets.
+        val base = (address[0].toInt() and 255).toString() + "." +
+            (address[1].toInt() and 255) + "." + (address[2].toInt() and 255) + "."
+        val own = address[3].toInt() and 255
+        show("Scanning $base" + "0/24 (ports 80, 443, 5555). TV may not expose any open ports.\n" +
+            "MAC matching unavailable on many modern Android phones; compare router DHCP leases.")
+        thread {
+            val pool = Executors.newFixedThreadPool(24)
+            val found = ConcurrentLinkedQueue<String>()
+            val done = AtomicInteger(0)
+            for (i in 1..254) {
+                if (i == own) continue
+                pool.execute {
+                    val ip = "$base$i"
+                    val open = listOf(80, 443, 5555).filter { number ->
+                        try {
+                            Socket().use { it.connect(InetSocketAddress(ip, number), 300) }
+                            true
+                        } catch (_: Exception) { false }
+                    }
+                    if (open.isNotEmpty()) found.add("$ip open ports: ${open.joinToString(", ")}")
+                    val count = done.incrementAndGet()
+                    if (count % 64 == 0) main.post { output.text = "LAN scan: $count/253 checked..." }
+                }
+            }
+            pool.shutdown()
+            val finished = pool.awaitTermination(90, TimeUnit.SECONDS)
+            if (!finished) pool.shutdownNow()
+            val results = found.toList().sortedWith(compareBy { it.substringBefore(" ").substringAfterLast(".").toIntOrNull() ?: 0 })
+            show("LAN discovery ${if (finished) "complete" else "timed out"}.\n" +
+                (if (results.isEmpty()) "No hosts with tested ports open. TV can still be online." else results.joinToString("\n")) +
+                "\nCannot identify JVC by IP alone. Compare MAC with router client list. " +
+                "ADB requires TV-side authorization; open port 5555 does not prove ADB.")
+        }
     }
 
     private fun probeNetwork() {
