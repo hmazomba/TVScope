@@ -26,6 +26,8 @@ Install Node.js LTS 22+ and clone repo. Open repository root:
     npm run check
     npm test
 
+Local npm test requires an OpenSSL executable available on PATH to generate short-lived test certificates; GitHub Actions supplies it automatically. On Windows without OpenSSL, run npm run check locally and use GitHub Actions for the full integration suite.
+
 Set certificate/key (from trusted certificate provisioning; private key outside repo), password and start:
 
     $env:TVSCOPE_TLS_CERT="C:\TVScope\certs\bridge-cert.pem"
