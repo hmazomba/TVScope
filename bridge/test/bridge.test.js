@@ -219,3 +219,48 @@ test("rejects plaintext and absent TLS certificate configuration", () => {
     adminPassword: "short"
   }), /at least 16/);
 });
+
+
+test("approved but unclaimed pairing expires and orphan token is revoked", async () => {
+  const start = await post("/api/v1/pair/start", {});
+  assert.equal(start.status, 201);
+  const approved = await post("/api/v1/admin/pairings/approve", {
+    id: start.body.id, code: start.body.code, label: "Expired TV"
+  }, adminHeaders());
+  assert.equal(approved.status, 200);
+  const orphanId = approved.body.device.id;
+  bridge.pairings.get(start.body.id).expiry = Date.now() - 1;
+  const cleaned = await request("/api/v1/admin/pairings", "GET", undefined, { Cookie: cookie });
+  assert.equal(cleaned.status, 200);
+  assert.equal(cleaned.body.pairings.some(p => p.id === start.body.id), false);
+  assert.equal(bridge.state.devices.find(d => d.id === orphanId).revokedAt !== null, true);
+  const claim = await post("/api/v1/pair/claim", {
+    id: start.body.id, secret: start.body.secret
+  });
+  assert.equal(claim.status, 403);
+});
+
+test("pair code rejects repeated guessing and preserves persistent revoked sessions", async () => {
+  const start = await post("/api/v1/pair/start", {});
+  assert.equal(start.status, 201);
+  const wrongCode = start.body.code === "111111" ? "222222" : "111111";
+  for (let i = 0; i < 5; i++) {
+    const failed = await post("/api/v1/admin/pairings/approve", {
+      id: start.body.id, code: wrongCode
+    }, adminHeaders());
+    assert.equal(failed.status, 403);
+  }
+  const lock = await post("/api/v1/admin/pairings/approve", {
+    id: start.body.id, code: wrongCode
+  }, adminHeaders());
+  assert.equal(lock.status, 429);
+  assert.equal(bridge.pairings.has(start.body.id), false);
+  const restored = createBridge({
+    key: fs.readFileSync(path.join(dir, "key.pem")),
+    cert: ca, adminPassword: password,
+    dataDir: path.join(dir, "data")
+  });
+  assert.equal(restored.state.devices.find(d => d.id === deviceId).revokedAt !== null, true);
+  assert.equal(restored.state.reports.length, 1);
+  restored.wss.close();
+});
