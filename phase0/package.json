@@ -1,0 +1,14 @@
+{
+  "name": "tvscope-phase0",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TVScope JVC browser capability reconnaissance",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "ws": "8.18.3"
+  }
+}
