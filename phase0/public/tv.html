@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>TVScope · Phase 0</title>
+  <link rel="stylesheet" href="/style.css">
+  <script defer src="/tv.js"></script>
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">TVScope / Hardware reconnaissance</p>
+      <h1>JVC Browser Diagnostics</h1>
+      <p>Browser-only tests. No Android debugging, firmware changes, package access, or root.</p>
+      <p class="note">Opening this page does not transmit diagnostic report. Use Send Report after review.</p>
+    </header>
+    <section>
+      <h2>1. Browser + network</h2>
+      <p>Check browser APIs, storage, video codec hints, HTTP and WebSocket.</p>
+      <button id="run" autofocus>Run capability tests</button>
+      <button id="fullscreen">Test fullscreen</button>
+      <p id="status" role="status">Ready.</p>
+    </section>
+    <section>
+      <h2>2. TV remote</h2>
+      <p>Focus box. Press Up, Down, Left, Right, OK, Back, Home and media buttons. Browser may consume some keys. Do not type passwords.</p>
+      <div id="keybox" tabindex="0" role="group" aria-label="Remote key capture">Focus here, then press remote buttons.</div>
+      <p id="key-status">No remote events recorded.</p>
+      <button id="clear-keys">Clear key events</button>
+    </section>
+    <section>
+      <h2>3. Browser media</h2>
+      <p>Codec support claims do not prove actual playback. For unprotected playback check, PC operator may add test MP4 at <code>phase0/media/test.mp4</code>.</p>
+      <button id="video-test">Load local test video</button>
+      <video id="video" controls playsinline preload="none" aria-label="Optional local MP4 test"></video>
+      <p id="video-status">No video test run.</p>
+      <p>DRM checks on local HTTP may be blocked by browser secure-context rules; this is not proof DRM unsupported.</p>
+    </section>
+    <section>
+      <h2>4. Review and share</h2>
+      <p>Review JSON before sending to PC. No credentials, MAC addresses or hidden OS details collected.</p>
+      <button id="review">Refresh report preview</button>
+      <button id="send">Send report to PC</button>
+      <pre id="report" tabindex="0">Run diagnostics first.</pre>
+      <p id="send-status" role="status"></p>
+    </section>
+    <footer>Phase 0 only. TVScope cannot unlock restricted Android settings.</footer>
+  </main>
+</body>
+</html>
