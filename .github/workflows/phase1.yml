@@ -1,0 +1,32 @@
+name: Phase 1 HTTPS Bridge
+
+on:
+  push:
+    paths:
+      - 'bridge/**'
+      - '.github/workflows/phase1.yml'
+  pull_request:
+    paths:
+      - 'bridge/**'
+      - '.github/workflows/phase1.yml'
+  workflow_dispatch:
+
+jobs:
+  phase1-integration:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: bridge
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Syntax verification
+        run: npm run check
+      - name: HTTPS and WebSocket integration tests
+        run: npm test
