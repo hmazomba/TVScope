@@ -25,5 +25,7 @@ jobs:
           node-version: '24'
       - name: Install pinned WebSocket dependency
         run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Check Node and browser JavaScript syntax
+        run: node --check server.js && node --check public/tv.js && node --check public/admin.js
       - name: Run Phase 0 HTTP and WebSocket tests
         run: npm test
