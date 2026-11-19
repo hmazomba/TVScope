@@ -25,7 +25,7 @@ function request(route, method = "GET", value, extra = {}) {
   return new Promise((resolve, reject) => {
     const options = {
       hostname: "127.0.0.1", port: bridge.server.address().port,
-      path: route, method, ca, rejectUnauthorized: true,
+      path: route, method, ca, servername: "localhost", rejectUnauthorized: true,
       headers: { Host: "127.0.0.1:" + bridge.server.address().port, ...extra }
     };
     if (data !== null) {
