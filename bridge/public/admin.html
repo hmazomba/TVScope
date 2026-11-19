@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>TVScope Bridge · PC Admin</title>
+  <link rel="stylesheet" href="/style.css">
+  <script defer src="/admin.js"></script>
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">TVScope / Phase 1 / PC only</p>
+      <h1>Bridge Administration</h1>
+      <p>Local-machine management. No Android system control.</p>
+    </header>
+    <section id="login-panel">
+      <h2>Admin login</h2>
+      <label for="password">Local admin passphrase</label>
+      <input id="password" type="password" autocomplete="current-password" placeholder="TVSCOPE_ADMIN_PASSWORD">
+      <button id="login">Sign in</button>
+      <p id="login-status" role="status"></p>
+    </section>
+    <div id="admin-panel" hidden>
+      <section>
+        <h2>Pending TV pairings</h2>
+        <p>Code appears on TV screen. Match selected pending session and enter that code here. Never approve unknown requests.</p>
+        <button id="refresh">Refresh devices and pairings</button>
+        <label for="pending">Pending request</label>
+        <select id="pending"></select>
+        <label for="pair-code">Six-digit code shown on TV</label>
+        <input id="pair-code" inputmode="numeric" maxlength="6" placeholder="000000">
+        <label for="pair-label">Device label</label>
+        <input id="pair-label" value="JVC LT-40NQ5165" maxlength="40">
+        <button id="approve">Approve pairing</button>
+        <p id="pair-status" role="status"></p>
+      </section>
+      <section>
+        <h2>Paired devices</h2>
+        <label for="device">Choose paired device</label>
+        <select id="device"></select>
+        <label for="notice-input">Display harmless test message on TV</label>
+        <input id="notice-input" maxlength="160" value="TVScope Bridge connected.">
+        <button id="send-notice">Send TV message</button>
+        <button id="revoke">Revoke selected device</button>
+        <p id="device-status" role="status"></p>
+        <pre id="device-json"></pre>
+      </section>
+      <section>
+        <h2>Diagnostic reports</h2>
+        <button id="refresh-reports">Refresh reports</button>
+        <button id="export">Export JSON</button>
+        <p id="report-status" role="status"></p>
+        <pre id="report-json"></pre>
+      </section>
+    </div>
+  </main>
+</body>
+</html>
