@@ -74,7 +74,7 @@
       featurePresence: {
         fetch: typeof window.fetch === "function",
         WebSocket: typeof window.WebSocket === "function",
-        localStorage: typeof window.localStorage !== "undefined",
+        localStorage: "localStorage" in window,
         fullscreen: !!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen),
         mediaCapabilities: !!navigator.mediaCapabilities,
         encryptedMediaExtensions: typeof navigator.requestMediaKeySystemAccess === "function",
@@ -207,12 +207,13 @@
   }
 
   window.addEventListener("keydown", function (e) {
+    if (document.activeElement !== keybox) return;
     var key = safeRemoteKey(e.key || "");
     if (document.activeElement === keybox &&
         (key.indexOf("Arrow") === 0 || key === "Enter")) e.preventDefault();
     remoteEvents.push({
       at: now(), key: key, code: key === "Other" ? "not_recorded" : (e.code || ""),
-      keyCode: Number(e.keyCode) || 0, repeat: !!e.repeat
+      keyCode: key === "Other" ? 0 : (Number(e.keyCode) || 0), repeat: !!e.repeat
     });
     if (remoteEvents.length > maxRemoteEvents) remoteEvents.shift();
     setText("key-status", "Last remote event: " + key + " / keyCode " + (Number(e.keyCode) || 0) +
