@@ -135,6 +135,29 @@
     });
   }
 
+  async function decodingCheck() {
+    if (!navigator.mediaCapabilities ||
+        typeof navigator.mediaCapabilities.decodingInfo !== "function") {
+      return { status: "api_missing" };
+    }
+    try {
+      var result = await navigator.mediaCapabilities.decodingInfo({
+        type: "file",
+        video: {
+          contentType: 'video/mp4; codecs="avc1.42E01E"',
+          width: 1280, height: 720, bitrate: 2000000, framerate: 30
+        }
+      });
+      return {
+        status: "hint_only",
+        supported: !!result.supported,
+        smooth: !!result.smooth,
+        powerEfficient: !!result.powerEfficient,
+        note: "Browser prediction; physical playback must be tested separately"
+      };
+    } catch (e) { return { status: "failed", reason: errorName(e) }; }
+  }
+
   async function drmCheck() {
     if (!window.isSecureContext) {
       return { status: "not_testable_on_insecure_http", reason: "EME may require HTTPS" };
@@ -165,6 +188,7 @@
         sessionStorage: storageCheck("sessionStorage")
       };
       tests.media = capabilitySurvey();
+      tests.media.decodingHint720p = await decodingCheck();
       tests.http = await httpCheck();
       tests.websocket = await websocketCheck();
       tests.drm = await drmCheck();
@@ -211,12 +235,16 @@
     var key = safeRemoteKey(e.key || "");
     if (document.activeElement === keybox &&
         (key.indexOf("Arrow") === 0 || key === "Enter")) e.preventDefault();
+    var rawCode = Number(e.keyCode) || 0;
+    var remoteCode = [3, 4, 8, 13, 19, 20, 21, 22, 23, 24, 25, 27, 37, 38, 39, 40,
+      66, 82, 85, 86, 87, 88, 89, 90, 126, 127, 166, 167].indexOf(rawCode) >= 0;
+    var code = key !== "Other" || remoteCode ? rawCode : 0;
     remoteEvents.push({
       at: now(), key: key, code: key === "Other" ? "not_recorded" : (e.code || ""),
-      keyCode: key === "Other" ? 0 : (Number(e.keyCode) || 0), repeat: !!e.repeat
+      keyCode: code, repeat: !!e.repeat
     });
     if (remoteEvents.length > maxRemoteEvents) remoteEvents.shift();
-    setText("key-status", "Last remote event: " + key + " / keyCode " + (Number(e.keyCode) || 0) +
+    setText("key-status", "Last remote event: " + key + " / keyCode " + code +
       " · captured " + remoteEvents.length);
     preview();
   });
